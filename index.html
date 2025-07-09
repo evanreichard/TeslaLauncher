@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tesla Launcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import * as simpleIcons from "https://unpkg.com/simple-icons@latest/index.mjs";
+      window.simpleIcons = simpleIcons;
+    </script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+      };
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body
+    class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-200"
+  >
+    <div class="container mx-auto px-4 py-8">
+      <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">
+          Tesla Launcher
+        </h1>
+        <div class="flex space-x-4">
+          <button
+            id="darkModeToggle"
+            class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition duration-200 flex items-center"
+          >
+            <i class="fas fa-moon dark:hidden"></i>
+            <i class="fas fa-sun hidden dark:inline"></i>
+          </button>
+          <button
+            id="addLinkBtn"
+            class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition duration-200 flex items-center"
+          >
+            <i class="fas fa-plus mr-2"></i>
+            Add Link
+          </button>
+        </div>
+      </div>
+
+      <!-- Links Grid -->
+      <div
+        id="linksContainer"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+      >
+        <!-- Links -->
+      </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div
+      id="modalOverlay"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-screen overflow-y-auto"
+      >
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2
+              class="text-xl font-semibold text-gray-800 dark:text-gray-200"
+              id="modalTitle"
+            >
+              Add New Link
+            </h2>
+            <button
+              id="closeModal"
+              class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition duration-200"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+
+          <form id="linkForm">
+            <div class="mb-4">
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >Name</label
+              >
+              <input
+                type="text"
+                id="linkName"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                autocomplete="off"
+                required
+              />
+            </div>
+            <div class="mb-4">
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >URL</label
+              >
+              <input
+                type="url"
+                id="linkUrl"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                required
+              />
+            </div>
+            <div class="mb-6">
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Icon
+              </label>
+              <div class="relative">
+                <input
+                  type="text"
+                  id="iconSearch"
+                  placeholder="Search for service (e.g., jellyfin, netflix, hbo)..."
+                  class="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  autocomplete="off"
+                />
+                <div
+                  class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none"
+                >
+                  <i class="fas fa-search text-gray-400"></i>
+                </div>
+              </div>
+              <div
+                id="iconPreview"
+                class="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 hidden"
+              >
+                <div id="iconDisplay" class="flex space-x-2"></div>
+                <div
+                  id="iconName"
+                  class="text-xs text-gray-500 dark:text-gray-400 mt-2"
+                ></div>
+              </div>
+              <input type="hidden" id="linkIcon" />
+            </div>
+            <div class="flex space-x-3">
+              <button
+                type="button"
+                id="cancelBtn"
+                class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 py-2 px-4 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                id="modalAction"
+                type="submit"
+                class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200"
+              >
+                Add Link
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      class WebsiteLauncher {
+        constructor() {
+          this.init();
+        }
+
+        init() {
+          this.loadLinks();
+          this.initDarkMode();
+          this.setupEventListeners();
+          this.renderLinks();
+        }
+
+        loadLinks() {
+          const stored = localStorage.getItem("websiteLauncher");
+          this.links = stored ? JSON.parse(stored) : [];
+        }
+
+        initDarkMode() {
+          const isDark = localStorage.getItem("darkMode") === "true";
+          if (isDark) {
+            document.documentElement.classList.add("dark");
+          }
+        }
+
+        setupEventListeners() {
+          // Modal Controls
+          document
+            .getElementById("addLinkBtn")
+            .addEventListener("click", () => this.openModal());
+          document
+            .getElementById("closeModal")
+            .addEventListener("click", () => this.closeModal());
+          document
+            .getElementById("cancelBtn")
+            .addEventListener("click", () => this.closeModal());
+          document
+            .getElementById("modalOverlay")
+            .addEventListener("click", (e) => {
+              if (e.target === document.getElementById("modalOverlay")) {
+                this.closeModal();
+              }
+            });
+
+          // Icon Search
+          document
+            .getElementById("iconSearch")
+            .addEventListener("input", (e) => this.searchIcon(e.target.value));
+
+          // Dark Mode Toggle
+          document
+            .getElementById("darkModeToggle")
+            .addEventListener("click", () => this.toggleDarkMode());
+
+          // Form Submission
+          document
+            .getElementById("linkForm")
+            .addEventListener("submit", (e) => this.handleSubmit(e));
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              this.closeModal();
+            }
+          });
+        }
+
+        searchIcon(query) {
+          const preview = document.getElementById("iconPreview");
+          const display = document.getElementById("iconDisplay");
+          const name = document.getElementById("iconName");
+
+          if (!query || !window.simpleIcons) {
+            preview.classList.add("hidden");
+            document.getElementById("linkIcon").value = "";
+            return;
+          }
+
+          const searchQuery = query.toLowerCase();
+
+          const matches = Object.entries(window.simpleIcons)
+            .filter(
+              ([key, icon]) =>
+                key.startsWith("si") &&
+                (icon.title.toLowerCase().includes(searchQuery) ||
+                  icon.slug.includes(searchQuery)),
+            )
+            .sort(([, a], [, b]) => {
+              const aMatch = a.title.toLowerCase().includes(searchQuery)
+                ? a.title
+                : a.slug;
+              const bMatch = b.title.toLowerCase().includes(searchQuery)
+                ? b.title
+                : b.slug;
+              return aMatch.length - bMatch.length;
+            })
+            .map(([key, icon]) => icon);
+
+          if (matches.length > 0) {
+            display.innerHTML = matches
+              .slice(0, 6)
+              .map(
+                (icon) =>
+                  `<div 
+		    class="p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded cursor-pointer" 
+		    onclick="
+		      const input = document.querySelector('#iconSearch');
+		      input.value = '${icon.slug}';
+		      input.dispatchEvent(new Event('input', { bubbles: true }));
+		    "
+		  >
+		    <img src="https://cdn.simpleicons.org/${icon.slug}/_/_" class="size-10">
+		  </div>`,
+              )
+              .join("");
+            name.textContent = `${matches.length} match${matches.length > 1 ? "es" : ""}`;
+            document.getElementById("linkIcon").value = matches[0].slug;
+            preview.classList.remove("hidden");
+          } else {
+            preview.classList.add("hidden");
+            document.getElementById("linkIcon").value = "";
+          }
+        }
+
+        toggleDarkMode() {
+          const isDark = document.documentElement.classList.toggle("dark");
+          localStorage.setItem("darkMode", isDark);
+          this.renderLinks();
+        }
+
+        openModal() {
+          this.resetModal();
+          document.getElementById("modalOverlay").classList.remove("hidden");
+          document.body.style.overflow = "hidden";
+          setTimeout(() => {
+            document.getElementById("linkName").focus();
+          }, 100);
+        }
+
+        resetModal() {
+          const modalTitle = document.getElementById("modalTitle");
+          modalTitle.textContent = this.editingId
+            ? "Edit Link"
+            : "Add New Link";
+
+          const modalAction = document.getElementById("modalAction");
+          modalAction.textContent = this.editingId ? "Save Item" : "Add Item";
+
+          document.getElementById("linkName").value = "";
+          document.getElementById("linkUrl").value = "";
+          document.getElementById("iconSearch").value = "";
+          document.getElementById("linkIcon").value = "";
+          document.getElementById("iconPreview").classList.add("hidden");
+        }
+
+        closeModal() {
+          document.getElementById("modalOverlay").classList.add("hidden");
+          document.body.style.overflow = "auto";
+
+          // Clear form and reset state
+          document.getElementById("linkForm").reset();
+          document.getElementById("iconPreview").classList.add("hidden");
+          this.editingId = null;
+        }
+
+        editModal(id) {
+          const link = this.links.find((l) => l.id === id);
+          if (!link) return;
+
+          this.editingId = id;
+          this.openModal();
+
+          // Populate form
+          document.getElementById("linkName").value = link.name;
+          document.getElementById("linkUrl").value = link.url;
+          document.getElementById("linkIcon").value = link.icon;
+          document.getElementById("iconSearch").value = link.icon;
+
+          // Show icon preview if icon exists
+          if (link.icon) {
+            this.searchIcon(link.icon);
+          }
+        }
+
+        saveLinks() {
+          localStorage.setItem("websiteLauncher", JSON.stringify(this.links));
+        }
+
+        handleSubmit(e) {
+          e.preventDefault();
+
+          const name = document.getElementById("linkName").value;
+          const url = document.getElementById("linkUrl").value;
+          const icon =
+            document.getElementById("linkIcon").value || "fas fa-globe";
+
+          if (this.editingId) {
+            // Edit existing link
+            const link = this.links.find((l) => l.id === this.editingId);
+            if (link) {
+              link.name = name;
+              link.url = url;
+              link.icon = icon;
+            }
+            this.editingId = null;
+          } else {
+            // Add new link
+            const newLink = {
+              id: Date.now(),
+              name,
+              url,
+              icon,
+              hidden: false,
+            };
+            this.links.push(newLink);
+          }
+
+          this.saveLinks();
+          this.renderLinks();
+          this.closeModal();
+        }
+
+        deleteLink(id) {
+          this.links = this.links.filter((link) => link.id !== id);
+          this.saveLinks();
+          this.renderLinks();
+        }
+
+        toggleHidden(id) {
+          const link = this.links.find((link) => link.id === id);
+          if (link) {
+            link.hidden = !link.hidden;
+            this.saveLinks();
+            this.renderLinks();
+          }
+        }
+
+        openLink(url) {
+          const redirectUrl = `https://www.youtube.com/redirect?q=${encodeURIComponent(url)}`;
+          window.open(redirectUrl, "_blank");
+        }
+
+        getIconHtml(icon, size = "medium") {
+          const sizes = {
+            small: { img: "w-4 h-4", fa: "text-lg" },
+            medium: { img: "w-6 h-6", fa: "text-2xl" },
+            large: { img: "w-14 h-14", fa: "text-5xl" },
+          };
+
+          const sizeClass = sizes[size] || sizes.medium;
+
+          if (icon.startsWith("fa")) {
+            return `<i class="${icon} ${sizeClass.fa} text-blue-500"></i>`;
+          }
+
+          return `<img src="https://cdn.simpleicons.org/${icon}/_/_" class="${sizeClass.img}">`;
+        }
+
+        renderLinks() {
+          const container = document.getElementById("linksContainer");
+          const visibleLinks = this.links.filter((link) => !link.hidden);
+          const hiddenLinks = this.links.filter((link) => link.hidden);
+
+          let html = "";
+
+          // Show visible links or empty state
+          if (visibleLinks.length === 0 && hiddenLinks.length === 0) {
+            html += `
+              <div class="col-span-full text-center py-12">
+                  <i class="fas fa-link text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                  <p class="text-gray-500 dark:text-gray-400 text-lg">No links added yet</p>
+                  <p class="text-gray-400 dark:text-gray-500">Click "Add Link" to get started</p>
+              </div>
+          `;
+          } else if (visibleLinks.length === 0) {
+            html += `
+              <div class="col-span-full text-center py-12">
+                  <i class="fas fa-eye-slash text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                  <p class="text-gray-500 dark:text-gray-400 text-lg">All links are hidden</p>
+              </div>
+          `;
+          } else {
+            html += visibleLinks
+              .map(
+                (link) => `
+	        <a href="javascript:void(0)" onclick="launcher.openLink('${link.url}')" 
+	           class="block bg-white dark:bg-gray-800 rounded-lg shadow-md px-4 pt-4 pb-2 hover:shadow-lg transition duration-200 cursor-pointer border border-gray-200 dark:border-gray-700">
+	          <div class="flex flex-col items-center text-center gap-4">
+		    ${this.getIconHtml(link.icon, "large")}
+	            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">${link.name}</h3>
+	            <div class="flex space-x-3">
+	              <button onclick="event.stopPropagation(); launcher.toggleHidden(${link.id})" 
+	                      class="text-yellow-500 hover:text-yellow-600 transition duration-200 p-2"
+	                      title="Hide">
+	                <i class="fas fa-eye-slash"></i>
+	              </button>
+	              <button onclick="event.stopPropagation(); launcher.editModal(${link.id})" 
+	                      class="text-blue-500 hover:text-blue-600 transition duration-200 p-2"
+	                      title="Edit">
+	                <i class="fas fa-edit"></i>
+	              </button>
+	              <button onclick="event.stopPropagation(); launcher.deleteLink(${link.id})" 
+	                      class="text-red-500 hover:text-red-600 transition duration-200 p-2"
+	                      title="Delete">
+	                <i class="fas fa-trash"></i>
+	              </button>
+	            </div>
+	          </div>
+	        </a>
+	      `,
+              )
+              .join("");
+          }
+
+          // Show hidden links section if any exist
+          if (hiddenLinks.length > 0) {
+            html += `
+                        <div class="col-span-full mt-8">
+                            <h2 class="text-xl font-semibold mb-4 text-gray-600 dark:text-gray-400">Hidden Links</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                ${hiddenLinks
+                                  .map(
+                                    (link) => `
+                                    <div class="bg-gray-200 dark:bg-gray-700 rounded-lg p-4 opacity-60 border border-gray-300 dark:border-gray-600">
+                                        <div class="flex items-center justify-between">
+					    <div class="flex items-center">
+					      ${this.getIconHtml(link.icon, "medium")}
+					      <span class="text-sm text-gray-700 dark:text-gray-300 ml-2">${link.name}</span>
+					    </div>
+                                            <div class="flex space-x-2">
+                                                <button onclick="launcher.toggleHidden(${link.id})" 
+                                                        class="text-green-500 hover:text-green-600 transition duration-200"
+                                                        title="Show">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+						<button onclick="event.stopPropagation(); launcher.editModal(${link.id})" 
+						        class="text-blue-500 hover:text-blue-600 transition duration-200"
+						        title="Edit">
+						    <i class="fas fa-edit"></i>
+						</button>
+                                                <button onclick="launcher.deleteLink(${link.id})" 
+                                                        class="text-red-500 hover:text-red-600 transition duration-200"
+                                                        title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `,
+                                  )
+                                  .join("")}
+                            </div>
+                        </div>
+                    `;
+          }
+
+          container.innerHTML = html;
+        }
+      }
+
+      const launcher = new WebsiteLauncher();
+    </script>
+  </body>
+</html>
